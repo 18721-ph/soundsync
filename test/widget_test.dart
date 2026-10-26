@@ -1,30 +1,35 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:soundsync/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('SoundSync dashboard displays correctly', (
+    WidgetTester tester,
+  ) async {
+    // Build the SoundSync application.
     await tester.pumpWidget(const SoundSyncApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify the main dashboard content appears.
+    expect(find.text('SoundSync'), findsOneWidget);
+    expect(find.text('Your sound, perfected.'), findsOneWidget);
+    expect(find.text('Volume control'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Verify the demo connection starts disconnected.
+    expect(find.text('No speaker connected'), findsOneWidget);
+    expect(find.text('Try demo connection'), findsOneWidget);
+  });
+
+  testWidgets('Demo connection button changes its displayed state', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const SoundSyncApp());
+
+    // Tap the simulated connection button.
+    await tester.tap(find.text('Try demo connection'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify the displayed state changes.
+    expect(find.text('Demo speaker connected'), findsOneWidget);
+    expect(find.text('Disconnect demo'), findsOneWidget);
   });
 }
