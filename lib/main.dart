@@ -5,11 +5,7 @@ void main() {
   runApp(const SoundSyncApp());
 }
 
-enum SoundProfile {
-  balanced,
-  bassBoost,
-  clearVoice,
-}
+enum SoundProfile { balanced, bassBoost, clearVoice }
 
 String profileName(SoundProfile profile) {
   switch (profile) {
@@ -57,6 +53,82 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
 
   SoundProfile selectedProfile = SoundProfile.balanced;
 
+  double bass = 0;
+  double midrange = 0;
+  double treble = 0;
+
+  void selectProfile(SoundProfile profile) {
+    setState(() {
+      selectedProfile = profile;
+
+      switch (profile) {
+        case SoundProfile.balanced:
+          bass = 0;
+          midrange = 0;
+          treble = 0;
+        case SoundProfile.bassBoost:
+          bass = 6;
+          midrange = 0;
+          treble = 2;
+        case SoundProfile.clearVoice:
+          bass = -2;
+          midrange = 4;
+          treble = 3;
+      }
+    });
+  }
+
+  void resetEqualizer() {
+    setState(() {
+      bass = 0;
+      midrange = 0;
+      treble = 0;
+      selectedProfile = SoundProfile.balanced;
+    });
+  }
+
+  Widget buildEqualizerSlider({
+    required String label,
+    required double value,
+    required ValueChanged<double> onChanged,
+    required Key sliderKey,
+    required Key valueKey,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              '${value > 0 ? '+' : ''}${value.toStringAsFixed(0)} dB',
+              key: valueKey,
+              style: const TextStyle(
+                color: Color(0xFF16C7A0),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          key: sliderKey,
+          value: value,
+          min: -12,
+          max: 12,
+          divisions: 24,
+          label: '${value.toStringAsFixed(0)} dB',
+          onChanged: (newValue) {
+            onChanged(newValue);
+            setState(() {
+              selectedProfile = SoundProfile.balanced;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,10 +163,8 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                 'A better listening experience starts here.',
                 style: TextStyle(color: Colors.grey.shade400),
               ),
-
               const SizedBox(height: 32),
 
-              // Bluetooth device card.
               _DashboardCard(
                 child: Column(
                   children: [
@@ -108,11 +178,11 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                       isConnected
                           ? 'Demo speaker connected'
                           : 'No speaker connected',
-                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -126,9 +196,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                     FilledButton.icon(
                       key: const Key('demo-connection-button'),
                       onPressed: () {
-                        setState(() {
-                          isConnected = !isConnected;
-                        });
+                        setState(() => isConnected = !isConnected);
                       },
                       icon: Icon(
                         isConnected
@@ -147,7 +215,6 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
 
               const SizedBox(height: 24),
 
-              // Volume card.
               _DashboardCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,10 +239,8 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                       max: 100,
                       divisions: 100,
                       label: '${volume.round()}%',
-                      onChanged: (newVolume) {
-                        setState(() {
-                          volume = newVolume;
-                        });
+                      onChanged: (newValue) {
+                        setState(() => volume = newValue);
                       },
                     ),
                     Text(
@@ -191,17 +256,13 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
 
               const SizedBox(height: 24),
 
-              // Sound profiles.
               const Text(
                 'Sound profiles',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                'Choose the listening experience you prefer.',
+                'Choose a preset or fine-tune each frequency below.',
                 style: TextStyle(color: Colors.grey.shade400),
               ),
               const SizedBox(height: 16),
@@ -210,13 +271,16 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                 title: 'Balanced',
                 description: 'A neutral everyday listening preset.',
                 icon: Icons.tune,
-                isSelected: selectedProfile == SoundProfile.balanced,
+                isSelected: selectedProfile == SoundProfile.balanced &&
+                    bass == 0 &&
+                    midrange == 0 &&
+                    treble == 0,
                 onTap: () => selectProfile(SoundProfile.balanced),
               ),
               const SizedBox(height: 10),
               _ProfileOption(
                 title: 'Bass Boost',
-                description: 'Designed to emphasize low frequencies.',
+                description: 'Emphasize low-frequency sounds.',
                 icon: Icons.graphic_eq,
                 isSelected: selectedProfile == SoundProfile.bassBoost,
                 onTap: () => selectProfile(SoundProfile.bassBoost),
@@ -224,20 +288,87 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
               const SizedBox(height: 10),
               _ProfileOption(
                 title: 'Clear Voice',
-                description: 'Designed with speech clarity in mind.',
+                description: 'Emphasize the vocal range.',
                 icon: Icons.record_voice_over,
                 isSelected: selectedProfile == SoundProfile.clearVoice,
                 onTap: () => selectProfile(SoundProfile.clearVoice),
               ),
 
-              const SizedBox(height: 12),
-              Text(
-                'Selected: ${profileName(selectedProfile)}',
-                key: const Key('selected-profile-label'),
-                style: const TextStyle(
-                  color: Color(0xFF16C7A0),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 24),
+
+              _DashboardCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.equalizer,
+                          color: Color(0xFF16C7A0),
+                          size: 28,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Equalizer',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Adjust each frequency from -12 dB to +12 dB.',
+                      style: TextStyle(color: Colors.grey.shade400),
+                    ),
+                    const SizedBox(height: 20),
+
+                    buildEqualizerSlider(
+                      label: 'Bass',
+                      value: bass,
+                      sliderKey: const Key('bass-slider'),
+                      valueKey: const Key('bass-value'),
+                      onChanged: (value) => setState(() => bass = value),
+                    ),
+                    const SizedBox(height: 12),
+                    buildEqualizerSlider(
+                      label: 'Midrange',
+                      value: midrange,
+                      sliderKey: const Key('midrange-slider'),
+                      valueKey: const Key('midrange-value'),
+                      onChanged: (value) => setState(() => midrange = value),
+                    ),
+                    const SizedBox(height: 12),
+                    buildEqualizerSlider(
+                      label: 'Treble',
+                      value: treble,
+                      sliderKey: const Key('treble-slider'),
+                      valueKey: const Key('treble-value'),
+                      onChanged: (value) => setState(() => treble = value),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        key: const Key('reset-equalizer-button'),
+                        onPressed: resetEqualizer,
+                        icon: const Icon(Icons.restart_alt),
+                        label: const Text('Reset equalizer'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Prototype only: these settings do not yet change '
+                      'the audio your device plays.',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -257,23 +388,16 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                 ],
               ),
               const SizedBox(height: 12),
-
               const _FeatureTile(
                 icon: Icons.bluetooth,
                 title: 'Real device detection',
                 subtitle: 'Identify your active audio output.',
               ),
               const _FeatureTile(
-                icon: Icons.equalizer,
-                title: 'Sound calibration',
-                subtitle: 'Explore settings for clearer audio.',
-              ),
-              const _FeatureTile(
                 icon: Icons.bookmark_outline,
                 title: 'Saved speaker profiles',
                 subtitle: 'Keep your preferred settings.',
               ),
-
               const SizedBox(height: 24),
               Center(
                 child: Text(
@@ -289,12 +413,6 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
         ),
       ),
     );
-  }
-
-  void selectProfile(SoundProfile profile) {
-    setState(() {
-      selectedProfile = profile;
-    });
   }
 }
 
@@ -338,14 +456,10 @@ class _ProfileOption extends StatelessWidget {
     const accent = Color(0xFF16C7A0);
 
     return Material(
-      color: isSelected
-          ? const Color(0xFF18352F)
-          : const Color(0xFF151F30),
+      color: isSelected ? const Color(0xFF18352F) : const Color(0xFF151F30),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        key: Key(
-          'profile-${title.toLowerCase().replaceAll(' ', '-')}',
-        ),
+        key: Key('profile-${title.toLowerCase().replaceAll(' ', '-')}'),
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
@@ -388,10 +502,7 @@ class _ProfileOption extends StatelessWidget {
                 ),
               ),
               if (isSelected)
-                const Icon(
-                  Icons.check_circle,
-                  color: accent,
-                ),
+                const Icon(Icons.check_circle, color: accent),
             ],
           ),
         ),
