@@ -1,6 +1,12 @@
 
 import 'package:flutter/material.dart';
 
+
+enum SoundProfile {
+  balanced,
+  bassBoost,
+  clearVoice,
+}
 void main() {
   runApp(const SoundSyncApp());
 }
@@ -37,6 +43,7 @@ class SoundSyncHome extends StatefulWidget {
 class _SoundSyncHomeState extends State<SoundSyncHome> {
   double volume = 50;
   bool isConnected = false;
+  SoundProfile selectedProfile = SoundProfile.balanced;
 
   @override
   Widget build(BuildContext context) {
