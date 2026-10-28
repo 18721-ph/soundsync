@@ -76,6 +76,9 @@ void main() {
 
     expect(find.text('+6 dB'), findsNothing);
     expect(find.text('+2 dB'), findsNothing);
+    expect(find.text('-2 dB'), findsNothing);
+    expect(find.text('+4 dB'), findsNothing);
+    expect(find.text('+3 dB'), findsNothing);
     expect(find.text('0 dB'), findsNWidgets(3));
   });
 }
