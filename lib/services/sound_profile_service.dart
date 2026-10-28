@@ -38,14 +38,19 @@ class SoundProfileService extends ChangeNotifier {
         _bass = 0;
         _midrange = 0;
         _treble = 0;
+        break;
+
       case SoundProfile.bassBoost:
         _bass = 6;
         _midrange = 0;
         _treble = 2;
+        break;
+
       case SoundProfile.clearVoice:
         _bass = -2;
         _midrange = 4;
         _treble = 3;
+        break;
     }
 
     notifyListeners();
