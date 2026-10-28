@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+
 import 'services/sound_profile_service.dart';
 
 void main() {
@@ -60,10 +60,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
             Text(
               '${value > 0 ? '+' : ''}${value.toStringAsFixed(0)} dB',
               key: valueKey,
@@ -94,15 +91,9 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
         backgroundColor: const Color(0xFF0B1220),
         title: const Row(
           children: [
-            Icon(
-              Icons.graphic_eq,
-              color: Color(0xFF16C7A0),
-            ),
+            Icon(Icons.graphic_eq, color: Color(0xFF16C7A0)),
             SizedBox(width: 10),
-            Text(
-              'SoundSync',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text('SoundSync', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -112,8 +103,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
           child: AnimatedBuilder(
             animation: soundProfileService,
             builder: (context, child) {
-              final selectedProfile =
-                  soundProfileService.selectedProfile;
+              final selectedProfile = soundProfileService.selectedProfile;
               final bass = soundProfileService.bass;
               final midrange = soundProfileService.midrange;
               final treble = soundProfileService.treble;
@@ -123,10 +113,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                 children: [
                   const Text(
                     'Your sound, perfected.',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -157,9 +144,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          isConnected
-                              ? 'This is a simulated connection.'
-                              : 'Real Bluetooth detection is not implemented yet.',
+                          isConnected ? 'This is a simulated connection.' : 'Real Bluetooth detection is not implemented yet.',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey.shade400),
                         ),
@@ -234,10 +219,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
 
                   const Text(
                     'Sound profiles',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -256,9 +238,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                         midrange == 0 &&
                         treble == 0,
                     onTap: () {
-                      soundProfileService.selectProfile(
-                        SoundProfile.balanced,
-                      );
+                      soundProfileService.selectProfile(SoundProfile.balanced);
                     },
                   ),
                   const SizedBox(height: 10),
@@ -266,12 +246,9 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                     title: 'Bass Boost',
                     description: 'Emphasize low-frequency sounds.',
                     icon: Icons.graphic_eq,
-                    isSelected:
-                        selectedProfile == SoundProfile.bassBoost,
+                    isSelected: selectedProfile == SoundProfile.bassBoost,
                     onTap: () {
-                      soundProfileService.selectProfile(
-                        SoundProfile.bassBoost,
-                      );
+                      soundProfileService.selectProfile(SoundProfile.bassBoost);
                     },
                   ),
                   const SizedBox(height: 10),
@@ -279,8 +256,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                     title: 'Clear Voice',
                     description: 'Emphasize the vocal range.',
                     icon: Icons.record_voice_over,
-                    isSelected:
-                        selectedProfile == SoundProfile.clearVoice,
+                    isSelected: selectedProfile == SoundProfile.clearVoice,
                     onTap: () {
                       soundProfileService.selectProfile(
                         SoundProfile.clearVoice,
@@ -371,10 +347,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
 
                   const Row(
                     children: [
-                      Icon(
-                        Icons.auto_awesome,
-                        color: Color(0xFF16C7A0),
-                      ),
+                      Icon(Icons.auto_awesome, color: Color(0xFF16C7A0)),
                       SizedBox(width: 8),
                       Text(
                         'Coming next',
@@ -456,14 +429,10 @@ class _ProfileOption extends StatelessWidget {
     const accent = Color(0xFF16C7A0);
 
     return Material(
-      color: isSelected
-          ? const Color(0xFF18352F)
-          : const Color(0xFF151F30),
+      color: isSelected ? const Color(0xFF18352F) : const Color(0xFF151F30),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        key: Key(
-          'profile-${title.toLowerCase().replaceAll(' ', '-')}',
-        ),
+        key: Key('profile-${title.toLowerCase().replaceAll(' ', '-')}'),
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
@@ -477,11 +446,7 @@ class _ProfileOption extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: isSelected ? accent : Colors.white70,
-                size: 28,
-              ),
+              Icon(icon, color: isSelected ? accent : Colors.white70, size: 28),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -505,11 +470,7 @@ class _ProfileOption extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isSelected)
-                const Icon(
-                  Icons.check_circle,
-                  color: accent,
-                ),
+              if (isSelected) const Icon(Icons.check_circle, color: accent),
             ],
           ),
         ),
@@ -535,10 +496,7 @@ class _FeatureTile extends StatelessWidget {
       color: const Color(0xFF151F30),
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: const Color(0xFF16C7A0),
-        ),
+        leading: Icon(icon, color: const Color(0xFF16C7A0)),
         title: Text(title),
         subtitle: Text(subtitle),
       ),
