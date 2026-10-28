@@ -1,11 +1,6 @@
-
 import 'package:flutter/foundation.dart';
 
-enum SoundProfile {
-  balanced,
-  bassBoost,
-  clearVoice,
-}
+enum SoundProfile { balanced, bassBoost, clearVoice }
 
 class SoundProfileService extends ChangeNotifier {
   SoundProfile _selectedProfile = SoundProfile.balanced;
