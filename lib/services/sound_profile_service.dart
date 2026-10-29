@@ -3,13 +3,14 @@ import 'package:flutter/foundation.dart';
 enum SoundProfile { balanced, bassBoost, clearVoice }
 
 class SoundProfileService extends ChangeNotifier {
-  SoundProfile _selectedProfile = SoundProfile.balanced;
+  SoundProfile? _selectedProfile = SoundProfile.balanced;
 
   double _bass = 0;
   double _midrange = 0;
   double _treble = 0;
 
-  SoundProfile get selectedProfile => _selectedProfile;
+  /// The active preset, or `null` when the user has manually fine-tuned it.
+  SoundProfile? get selectedProfile => _selectedProfile;
   double get bass => _bass;
   double get midrange => _midrange;
   double get treble => _treble;
@@ -22,6 +23,8 @@ class SoundProfileService extends ChangeNotifier {
         return 'Bass Boost';
       case SoundProfile.clearVoice:
         return 'Clear Voice';
+      case null:
+        return 'Custom';
     }
   }
 
@@ -53,19 +56,19 @@ class SoundProfileService extends ChangeNotifier {
 
   void setBass(double value) {
     _bass = value.clamp(-12.0, 12.0).toDouble();
-    _selectedProfile = SoundProfile.balanced;
+    _selectedProfile = null;
     notifyListeners();
   }
 
   void setMidrange(double value) {
     _midrange = value.clamp(-12.0, 12.0).toDouble();
-    _selectedProfile = SoundProfile.balanced;
+    _selectedProfile = null;
     notifyListeners();
   }
 
   void setTreble(double value) {
     _treble = value.clamp(-12.0, 12.0).toDouble();
-    _selectedProfile = SoundProfile.balanced;
+    _selectedProfile = null;
     notifyListeners();
   }
 
