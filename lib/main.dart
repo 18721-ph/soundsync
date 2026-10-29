@@ -232,11 +232,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                     title: 'Balanced',
                     description: 'A neutral everyday listening preset.',
                     icon: Icons.tune,
-                    isSelected:
-                        selectedProfile == SoundProfile.balanced &&
-                        bass == 0 &&
-                        midrange == 0 &&
-                        treble == 0,
+                    isSelected: selectedProfile == SoundProfile.balanced,
                     onTap: () {
                       soundProfileService.selectProfile(SoundProfile.balanced);
                     },

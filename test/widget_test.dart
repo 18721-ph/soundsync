@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:soundsync/main.dart';
@@ -80,5 +79,21 @@ void main() {
     expect(find.text('+4 dB'), findsNothing);
     expect(find.text('+3 dB'), findsNothing);
     expect(find.text('0 dB'), findsNWidgets(3));
+  });
+
+  testWidgets('Dashboard lays out at narrow and wide viewport widths', (
+    WidgetTester tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+
+    for (final width in [320.0, 1280.0]) {
+      tester.view.physicalSize = Size(width, 800);
+      tester.view.devicePixelRatio = 1;
+
+      await tester.pumpWidget(const SoundSyncApp());
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    }
   });
 }
