@@ -37,7 +37,79 @@ class SoundSyncApp extends StatelessWidget {
         trackHeight: 5,
       ),
     ),
+    onUnknownRoute: (_) => MaterialPageRoute<void>(
+      builder: (_) => const _NotFoundPage(),
+    ),
     home: const SoundSyncHome(),
+  );
+}
+
+class _NotFoundPage extends StatelessWidget {
+  const _NotFoundPage();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: _mint.withValues(alpha: .10),
+                  border: Border.all(color: _mint.withValues(alpha: .35)),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: const Icon(
+                  Icons.graphic_eq_rounded,
+                  color: _mint,
+                  size: 34,
+                ),
+              ),
+              const SizedBox(height: 28),
+              const Text(
+                '404',
+                style: TextStyle(
+                  color: _mint,
+                  fontSize: 64,
+                  height: 1,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'This page missed a beat.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _text,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "We couldn't find the page you're looking for.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: _muted, fontSize: 15),
+              ),
+              const SizedBox(height: 28),
+              FilledButton.icon(
+                onPressed: () => Navigator.of(
+                  context,
+                ).popUntil((route) => route.isFirst),
+                icon: const Icon(Icons.home_rounded),
+                label: const Text('Back to SoundSync'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
   );
 }
 
