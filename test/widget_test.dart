@@ -96,4 +96,24 @@ void main() {
       expect(tester.takeException(), isNull);
     }
   });
+
+  testWidgets('Unknown routes show a 404 page and return to the dashboard', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const SoundSyncApp());
+
+    Navigator.of(
+      tester.element(find.byType(SoundSyncHome)),
+    ).pushNamed('/not-a-page');
+    await tester.pumpAndSettle();
+
+    expect(find.text('404'), findsOneWidget);
+    expect(find.text('This page missed a beat.'), findsOneWidget);
+
+    await tester.tap(find.text('Back to SoundSync'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your sound, perfected.'), findsOneWidget);
+    expect(find.text('404'), findsNothing);
+  });
 }
