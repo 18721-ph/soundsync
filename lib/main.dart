@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'services/sound_profile_service.dart';
+import 'services/audio_controller.dart';
 
 const _canvas = Color(0xFF0B1220),
     _surface = Color(0xFF151F30),
@@ -37,9 +38,8 @@ class SoundSyncApp extends StatelessWidget {
         trackHeight: 5,
       ),
     ),
-    onUnknownRoute: (_) => MaterialPageRoute<void>(
-      builder: (_) => const _NotFoundPage(),
-    ),
+    onUnknownRoute: (_) =>
+        MaterialPageRoute<void>(builder: (_) => const _NotFoundPage()),
     home: const SoundSyncHome(),
   );
 }
@@ -99,9 +99,8 @@ class _NotFoundPage extends StatelessWidget {
               ),
               const SizedBox(height: 28),
               FilledButton.icon(
-                onPressed: () => Navigator.of(
-                  context,
-                ).popUntil((route) => route.isFirst),
+                onPressed: () =>
+                    Navigator.of(context).popUntil((route) => route.isFirst),
                 icon: const Icon(Icons.home_rounded),
                 label: const Text('Back to SoundSync'),
               ),
@@ -121,11 +120,30 @@ class SoundSyncHome extends StatefulWidget {
 
 class _SoundSyncHomeState extends State<SoundSyncHome> {
   final SoundProfileService soundProfileService = SoundProfileService();
+  final AudioController audio = AudioController();
   double volume = 50;
-  bool isConnected = false;
+  @override
+  void initState() {
+    super.initState();
+    soundProfileService.addListener(_configureAudio);
+    audio.initialize();
+  }
+
+  void _configureAudio() {
+    audio.configure(
+      bass: soundProfileService.bass,
+      midrange: soundProfileService.midrange,
+      treble: soundProfileService.treble,
+      volume: volume,
+      bypass: audio.bypass,
+    );
+  }
+
   @override
   void dispose() {
+    soundProfileService.removeListener(_configureAudio);
     soundProfileService.dispose();
+    audio.dispose();
     super.dispose();
   }
 
@@ -133,7 +151,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
       child: AnimatedBuilder(
-        animation: soundProfileService,
+        animation: Listenable.merge([soundProfileService, audio]),
         builder: (context, _) => LayoutBuilder(
           builder: (context, constraints) {
             final desktop = constraints.maxWidth >= 920;
@@ -148,7 +166,7 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _Header(connected: isConnected),
+                      _Header(connected: audio.playing),
                       const SizedBox(height: 38),
                       const _Intro(),
                       const SizedBox(height: 28),
@@ -158,25 +176,25 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                           children: [
                             Expanded(
                               flex: 11,
-                              child: _DeviceCard(
-                                connected: isConnected,
-                                onToggle: _toggle,
-                              ),
+                              child: _DeviceCard(audio: audio),
                             ),
                             const SizedBox(width: 20),
                             Expanded(
                               flex: 9,
                               child: _VolumeCard(
                                 value: volume,
-                                onChanged: _setVolume,
+                                onChanged: audio.ready ? _setVolume : null,
                               ),
                             ),
                           ],
                         )
                       else ...[
-                        _DeviceCard(connected: isConnected, onToggle: _toggle),
+                        _DeviceCard(audio: audio),
                         const SizedBox(height: 20),
-                        _VolumeCard(value: volume, onChanged: _setVolume),
+                        _VolumeCard(
+                          value: volume,
+                          onChanged: audio.ready ? _setVolume : null,
+                        ),
                       ],
                       const SizedBox(height: 36),
                       const _Heading(
@@ -185,12 +203,39 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
                         subtitle: 'Choose a tuned starting point, then make it yours.',
                       ),
                       const SizedBox(height: 16),
-                      _ProfileGrid(
-                        selected: soundProfileService.selectedProfile,
-                        onSelect: soundProfileService.selectProfile,
+                      IgnorePointer(
+                        ignoring: !audio.eqAvailable,
+                        child: Opacity(
+                          opacity: audio.eqAvailable ? 1 : .45,
+                          child: _ProfileGrid(
+                            selected: soundProfileService.selectedProfile,
+                            onSelect: audio.eqAvailable
+                                ? soundProfileService.selectProfile
+                                : null,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 36),
-                      _EqualizerCard(service: soundProfileService),
+                      _EqualizerCard(
+                        service: soundProfileService,
+                        enabled: audio.eqAvailable,
+                      ),
+                      SwitchListTile(
+                        title: const Text('Bypass equalizer'),
+                        subtitle: const Text(
+                          'Applies only to audio played by SoundSync.',
+                        ),
+                        value: audio.bypass,
+                        onChanged: audio.eqAvailable
+                            ? (value) => audio.configure(
+                                bass: soundProfileService.bass,
+                                midrange: soundProfileService.midrange,
+                                treble: soundProfileService.treble,
+                                volume: volume,
+                                bypass: value,
+                              )
+                            : null,
+                      ),
                       const SizedBox(height: 36),
                       const _Heading(
                         eyebrow: 'ON THE HORIZON',
@@ -217,8 +262,10 @@ class _SoundSyncHomeState extends State<SoundSyncHome> {
       ),
     ),
   );
-  void _toggle() => setState(() => isConnected = !isConnected);
-  void _setVolume(double value) => setState(() => volume = value);
+  void _setVolume(double value) {
+    setState(() => volume = value);
+    _configureAudio();
+  }
 }
 
 class _Header extends StatelessWidget {
@@ -239,7 +286,7 @@ class _Header extends StatelessWidget {
       const SizedBox(width: 8),
       IconButton(
         tooltip: 'Settings',
-        onPressed: () {},
+        onPressed: null,
         icon: const Icon(Icons.settings_outlined, color: _muted),
       ),
     ],
@@ -269,7 +316,7 @@ class _ConnectionPill extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            connected ? 'Demo connected' : 'No device',
+            connected ? 'Playing' : 'Not playing',
             style: TextStyle(
               fontSize: 11,
               color: color,
@@ -307,78 +354,60 @@ class _Intro extends StatelessWidget {
 }
 
 class _DeviceCard extends StatelessWidget {
-  const _DeviceCard({required this.connected, required this.onToggle});
-  final bool connected;
-  final VoidCallback onToggle;
+  const _DeviceCard({required this.audio});
+  final AudioController audio;
   @override
   Widget build(BuildContext context) => _Panel(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Text(
+          'Audio playback',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        Text(audio.route, key: const Key('active-route')),
+        const SizedBox(height: 8),
+        Text(audio.message, style: const TextStyle(color: _muted)),
+        if (audio.error != null) ...[
+          const SizedBox(height: 8),
+          Text(audio.error!, style: const TextStyle(color: _amber)),
+        ],
+        if (audio.outputs.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            'Available outputs: ${audio.outputs.join(', ')}',
+            style: const TextStyle(color: _muted, fontSize: 12),
+          ),
+        ],
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            _IconBox(
-              icon: connected
-                  ? Icons.speaker_rounded
-                  : Icons.speaker_group_outlined,
-              color: connected ? _mint : _amber,
+            FilledButton.icon(
+              key: const Key('choose-audio-button'),
+              onPressed:
+                  audio.playback == CapabilityStatus.available && !audio.busy
+                  ? audio.chooseFile
+                  : null,
+              icon: const Icon(Icons.audio_file),
+              label: Text(audio.busy ? 'Choosing...' : 'Choose audio file'),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    connected
-                        ? 'Demo speaker connected'
-                        : 'No speaker connected',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    connected
-                        ? 'Bluetooth • Simulated connection'
-                        : 'Connect a simulated speaker to explore controls.',
-                    style: const TextStyle(color: _muted, fontSize: 13),
-                  ),
-                ],
-              ),
+            OutlinedButton.icon(
+              key: const Key('play-pause-button'),
+              onPressed: audio.ready
+                  ? () => audio.command(audio.playing ? 'pause' : 'play')
+                  : null,
+              icon: Icon(audio.playing ? Icons.pause : Icons.play_arrow),
+              label: Text(audio.playing ? 'Pause' : 'Play'),
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        Container(height: 1, color: _border),
-        const SizedBox(height: 16),
-        Text(
-          connected
-              ? 'This is a simulated connection.'
-              : 'Real Bluetooth detection is not implemented yet.',
-          style: const TextStyle(color: _muted, fontSize: 12),
-        ),
-        const SizedBox(height: 18),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            key: const Key('demo-connection-button'),
-            style: FilledButton.styleFrom(
-              backgroundColor: _mint,
-              foregroundColor: _canvas,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: onToggle,
-            icon: Icon(
-              connected
-                  ? Icons.link_off_rounded
-                  : Icons.bluetooth_searching_rounded,
-            ),
-            label: Text(connected ? 'Disconnect demo' : 'Try demo connection'),
-          ),
+        const SizedBox(height: 12),
+        const Text(
+          'Use system audio settings to choose Bluetooth, wired or USB output. Only the selected file is processed.',
+          style: TextStyle(color: _muted, fontSize: 12),
         ),
       ],
     ),
@@ -388,7 +417,7 @@ class _DeviceCard extends StatelessWidget {
 class _VolumeCard extends StatelessWidget {
   const _VolumeCard({required this.value, required this.onChanged});
   final double value;
-  final ValueChanged<double> onChanged;
+  final ValueChanged<double>? onChanged;
   @override
   Widget build(BuildContext context) => _Panel(
     child: Column(
@@ -410,7 +439,7 @@ class _VolumeCard extends StatelessWidget {
         ),
         const SizedBox(height: 3),
         const Text(
-          'Demo output level',
+          'SoundSync playback level',
           style: TextStyle(color: _muted, fontSize: 12),
         ),
         const SizedBox(height: 12),
@@ -432,7 +461,7 @@ class _VolumeCard extends StatelessWidget {
           ],
         ),
         const Text(
-          'This slider changes the demo value only.',
+          'Controls this app only. EQ boosts reserve output headroom.',
           style: TextStyle(color: _muted, fontSize: 12),
         ),
       ],
@@ -443,7 +472,7 @@ class _VolumeCard extends StatelessWidget {
 class _ProfileGrid extends StatelessWidget {
   const _ProfileGrid({required this.selected, required this.onSelect});
   final SoundProfile? selected;
-  final ValueChanged<SoundProfile> onSelect;
+  final ValueChanged<SoundProfile>? onSelect;
   @override
   Widget build(BuildContext context) {
     final options = [
@@ -487,7 +516,7 @@ class _ProfileGrid extends StatelessWidget {
                     icon: o.$4,
                     keyName: o.$5,
                     selected: selected == o.$1,
-                    onTap: () => onSelect(o.$1),
+                    onTap: onSelect == null ? null : () => onSelect!(o.$1),
                   ),
                 ),
               )
@@ -510,10 +539,11 @@ class _ProfileCard extends StatelessWidget {
   final String title, description, keyName;
   final IconData icon;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Semantics(
     selected: selected,
+    enabled: onTap != null,
     button: true,
     child: Material(
       color: Colors.transparent,
@@ -571,8 +601,9 @@ class _ProfileCard extends StatelessWidget {
 }
 
 class _EqualizerCard extends StatelessWidget {
-  const _EqualizerCard({required this.service});
+  const _EqualizerCard({required this.service, required this.enabled});
   final SoundProfileService service;
+  final bool enabled;
   @override
   Widget build(BuildContext context) => _Panel(
     child: Column(
@@ -611,7 +642,7 @@ class _EqualizerCard extends StatelessWidget {
           value: service.bass,
           sliderKey: const Key('bass-slider'),
           valueKey: const Key('bass-value'),
-          onChanged: service.setBass,
+          onChanged: enabled ? service.setBass : null,
         ),
         const SizedBox(height: 18),
         _EqualizerSlider(
@@ -620,7 +651,7 @@ class _EqualizerCard extends StatelessWidget {
           value: service.midrange,
           sliderKey: const Key('midrange-slider'),
           valueKey: const Key('midrange-value'),
-          onChanged: service.setMidrange,
+          onChanged: enabled ? service.setMidrange : null,
         ),
         const SizedBox(height: 18),
         _EqualizerSlider(
@@ -629,14 +660,14 @@ class _EqualizerCard extends StatelessWidget {
           value: service.treble,
           sliderKey: const Key('treble-slider'),
           valueKey: const Key('treble-value'),
-          onChanged: service.setTreble,
+          onChanged: enabled ? service.setTreble : null,
         ),
         const SizedBox(height: 24),
         Align(
           alignment: Alignment.centerRight,
           child: OutlinedButton.icon(
             key: const Key('reset-equalizer-button'),
-            onPressed: service.reset,
+            onPressed: enabled ? service.reset : null,
             icon: const Icon(Icons.restart_alt_rounded),
             label: const Text('Reset equalizer'),
             style: OutlinedButton.styleFrom(
@@ -648,7 +679,7 @@ class _EqualizerCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const Text(
-          'Prototype only: these settings do not yet change the audio your device plays.',
+          'Android session EQ: bands and gain limits vary by device. Select a file to check availability.',
           style: TextStyle(color: _muted, fontSize: 12),
         ),
       ],
@@ -668,7 +699,7 @@ class _EqualizerSlider extends StatelessWidget {
   final String label, hint;
   final double value;
   final Key sliderKey, valueKey;
-  final ValueChanged<double> onChanged;
+  final ValueChanged<double>? onChanged;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -757,8 +788,8 @@ class _FeatureGrid extends StatelessWidget {
     const features = [
       (
         Icons.bluetooth_searching_rounded,
-        'Real device detection',
-        'Identify your active audio output.',
+        'More audio platforms',
+        'Add native playback beyond Android.',
       ),
       (
         Icons.bookmark_added_outlined,

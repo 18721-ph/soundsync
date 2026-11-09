@@ -55,18 +55,21 @@ class SoundProfileService extends ChangeNotifier {
   }
 
   void setBass(double value) {
+    if (!value.isFinite) return;
     _bass = value.clamp(-12.0, 12.0).toDouble();
     _selectedProfile = null;
     notifyListeners();
   }
 
   void setMidrange(double value) {
+    if (!value.isFinite) return;
     _midrange = value.clamp(-12.0, 12.0).toDouble();
     _selectedProfile = null;
     notifyListeners();
   }
 
   void setTreble(double value) {
+    if (!value.isFinite) return;
     _treble = value.clamp(-12.0, 12.0).toDouble();
     _selectedProfile = null;
     notifyListeners();

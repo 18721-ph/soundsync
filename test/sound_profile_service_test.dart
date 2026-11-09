@@ -2,6 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:soundsync/services/sound_profile_service.dart';
 
 void main() {
+  test('non-finite parameters leave the profile unchanged', () {
+    final service = SoundProfileService();
+    service.setBass(double.nan);
+    service.setMidrange(double.infinity);
+    service.setTreble(double.negativeInfinity);
+    expect(service.bass, 0);
+    expect(service.midrange, 0);
+    expect(service.treble, 0);
+    expect(service.selectedProfile, SoundProfile.balanced);
+    service.dispose();
+  });
   test(
     'manual adjustment preserves other frequencies and clears the preset',
     () {
